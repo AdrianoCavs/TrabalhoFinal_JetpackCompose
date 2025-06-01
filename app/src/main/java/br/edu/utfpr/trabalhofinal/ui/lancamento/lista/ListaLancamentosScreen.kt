@@ -2,6 +2,7 @@ package br.edu.utfpr.trabalhofinal.ui.lancamento.lista
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -16,8 +17,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.ThumbDownOffAlt
+import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -30,6 +34,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -38,6 +44,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import br.edu.utfpr.trabalhofinal.R
 import br.edu.utfpr.trabalhofinal.data.Lancamento
 import br.edu.utfpr.trabalhofinal.data.TipoLancamentoEnum
+import br.edu.utfpr.trabalhofinal.ui.theme.GreenIncome
+import br.edu.utfpr.trabalhofinal.ui.theme.RedExpense
 import br.edu.utfpr.trabalhofinal.ui.theme.TrabalhoFinalTheme
 import br.edu.utfpr.trabalhofinal.ui.utils.composables.Carregando
 import br.edu.utfpr.trabalhofinal.ui.utils.composables.ErroAoCarregar
@@ -128,23 +136,25 @@ private fun AppBarPreview() {
 
 @Composable
 private fun ListaVazia(modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
+    Column( modifier = modifier, verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+        Image(
+            painter = painterResource(R.drawable.empty_archive),
+            contentDescription = stringResource(R.string.sem_lancamentos),
+            modifier = Modifier.size(128.dp),
+            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary)
+        );
         Text(
             modifier = Modifier.padding(top = 8.dp, start = 8.dp, end = 8.dp),
             text = stringResource(R.string.lista_vazia_title),
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.primary
-        )
+        );
         Text(
             modifier = Modifier.padding(top = 8.dp, start = 8.dp, end = 8.dp),
             text = stringResource(R.string.lista_vazia_subtitle),
             style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.primary
-        )
+        );
     }
 }
 
@@ -164,13 +174,27 @@ private fun List(
 ) {
     LazyColumn(modifier = modifier) {
         items(lancamentos) { lancamento ->
-            val pago = if (lancamento.paga) "pago" else "pendente"
-            val descricao = "${lancamento.data.formatar()} - ${lancamento.descricao} - ${lancamento.valor} - $pago"
+            //abaixo define a cor (tint) de acordo o tipo lançamento (Receita = verde / Despesa = vermelho) - usado no leadingContent mais abaixo
+            val tipoLancamentoColor = if (lancamento.tipo == TipoLancamentoEnum.RECEITA) GreenIncome else RedExpense;
+            //TODO essa val sinal tá feio, ver uma maneira melhor de formatar isso
+            val sinal = if (lancamento.tipo == TipoLancamentoEnum.DESPESA) "-" else ""
+            //val valorLancamento = if (lancamento.tipo == TipoLancamentoEnum.DESPESA) lancamento.valor.minus(lancamento.valor) else lancamento.valor
 
             ListItem(
                 modifier = Modifier.clickable { onLancamentoPressed(lancamento) },
-                headlineContent = { Text(descricao) },
-            )
+                leadingContent = {
+                    if (lancamento.paga) Icon(imageVector = Icons.Filled.ThumbUp, contentDescription = "pago", tint = tipoLancamentoColor)
+                    else Icon(imageVector = Icons.Filled.ThumbDownOffAlt, contentDescription = "pendente", tint = tipoLancamentoColor)
+                },
+                headlineContent = {
+                    Column(){
+                        Row(){ Text(text = lancamento.descricao, style = MaterialTheme.typography.bodyLarge) }
+                        Row(){ Text(text = lancamento.data.formatar(), style = MaterialTheme.typography.bodySmall) }
+                    }
+                },
+                trailingContent = { Text(text = "${sinal} ${lancamento.valor.formatar()}", style = MaterialTheme.typography.bodyLarge, color = tipoLancamentoColor) }
+            );
+            HorizontalDivider(thickness = 0.5.dp);
         }
     }
 }
@@ -217,12 +241,9 @@ fun Totalizador(
     valor: BigDecimal,
     textColor: Color
 ) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.End,
-    ) {
+    //textColor = if (BigDecimal.ZERO < valor) GreenIncome else RedExpense;
+    val valueColor = if (valor.compareTo(BigDecimal.ZERO)>0) GreenIncome else if (valor.compareTo(BigDecimal.ZERO)<0) RedExpense else textColor;
+    Row(modifier = modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.End) {
         Text(
             modifier = Modifier.weight(1f),
             textAlign = TextAlign.End,
@@ -231,10 +252,10 @@ fun Totalizador(
         )
         Spacer(Modifier.size(10.dp))
         Text(
-            modifier = Modifier.width(100.dp),
+            modifier = Modifier.width(105.dp),
             textAlign = TextAlign.End,
             text = valor.formatar(),
-            color = textColor
+            color = valueColor
         )
         Spacer(Modifier.size(20.dp))
     }
@@ -268,6 +289,13 @@ private fun gerarLancamentos(): List<Lancamento> = listOf(
     Lancamento(
         descricao = "Condomínio",
         valor = BigDecimal("200.0"),
+        tipo = TipoLancamentoEnum.DESPESA,
+        data = LocalDate.of(2024, 9, 15),
+        paga = false
+    ),
+    Lancamento(
+        descricao = "Prejuízo",
+        valor = BigDecimal("53500.0"),
         tipo = TipoLancamentoEnum.DESPESA,
         data = LocalDate.of(2024, 9, 15),
         paga = false

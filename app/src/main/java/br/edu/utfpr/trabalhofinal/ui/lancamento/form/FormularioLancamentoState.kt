@@ -2,6 +2,8 @@ package br.edu.utfpr.trabalhofinal.ui.lancamento.form
 
 import br.edu.utfpr.trabalhofinal.data.Lancamento
 import br.edu.utfpr.trabalhofinal.data.TipoLancamentoEnum
+import br.edu.utfpr.trabalhofinal.utils.formatar
+import java.time.LocalDate
 
 data class CampoFormulario(
     val valor: String = "",
@@ -22,7 +24,8 @@ data class FormularioLancamentoState(
     val lancamentoPersistidaOuRemovida: Boolean = false,
     val codigoMensagem: Int = 0,
     val descricao: CampoFormulario = CampoFormulario(),
-    val data: CampoFormulario = CampoFormulario(),
+
+    val data: CampoFormulario = CampoFormulario(valor = LocalDate.now().formatar()),
     val valor: CampoFormulario = CampoFormulario(),
     val paga: CampoFormulario = CampoFormulario(),
     val tipo: CampoFormulario = CampoFormulario(TipoLancamentoEnum.DESPESA.toString())

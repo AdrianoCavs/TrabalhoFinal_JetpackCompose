@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import br.edu.utfpr.trabalhofinal.R
 import br.edu.utfpr.trabalhofinal.ui.theme.TrabalhoFinalTheme
 import br.edu.utfpr.trabalhofinal.utils.formatar
+import br.edu.utfpr.trabalhofinal.utils.toLocalDate
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
@@ -32,18 +33,13 @@ import java.time.ZoneOffset
 fun FormDatePicker(
     modifier: Modifier = Modifier,
     label: String,
-    value: LocalDate,
+    value: LocalDate = LocalDate.now(),
     onValueChanged: (LocalDate) -> Unit,
     errorMessageCode: Int = 0,
     enabled: Boolean = true
 ) {
-    var showDatePicker by remember { mutableStateOf(false) }
-    val datePickerState = rememberDatePickerState(
-        initialSelectedDateMillis = value
-            .atStartOfDay(ZoneOffset.UTC)
-            .toInstant()
-            .toEpochMilli()
-    )
+    var showDatePicker by remember { mutableStateOf(false) };
+    val datePickerState = rememberDatePickerState( initialSelectedDateMillis = value.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli() );
 
     FormTextField(
         modifier = modifier,
@@ -55,10 +51,7 @@ fun FormDatePicker(
         errorMessageCode = errorMessageCode,
         trailingIcon = {
             IconButton(onClick = { showDatePicker = !showDatePicker }) {
-                Icon(
-                    imageVector = Icons.Default.DateRange,
-                    contentDescription = "Selecione a data"
-                )
+                Icon( imageVector = Icons.Default.DateRange, contentDescription = "Selecione a data" )
             }
         }
     )
@@ -69,11 +62,8 @@ fun FormDatePicker(
             confirmButton = {
                 TextButton(onClick = {
                     datePickerState.selectedDateMillis?.let {
-                        val date = Instant
-                            .ofEpochMilli(it)
-                            .atZone(ZoneOffset.UTC)
-                            .toLocalDate()
-                        onValueChanged(date)
+                        val date = Instant.ofEpochMilli(it).atZone(ZoneOffset.UTC).toLocalDate();
+                        onValueChanged(date);
                     }
                     showDatePicker = !showDatePicker
                 }) {
@@ -94,10 +84,8 @@ private fun FormDatePickerPreview() {
         FormDatePicker(
             modifier = Modifier.padding(20.dp),
             label = "Data",
-            value = value,
-            onValueChanged = { newValue ->
-                value = newValue
-            }
+            value = value.formatar().toLocalDate(),
+            onValueChanged = { newValue -> value = newValue }
         )
     }
 }

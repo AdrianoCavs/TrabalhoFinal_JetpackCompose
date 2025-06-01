@@ -32,3 +32,8 @@ fun LocalDate.formatar(): String {
     val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
     return format(formatter)
 }
+
+fun String.toLocalDate(): LocalDate{
+    val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    return LocalDate.parse(this, formatter);
+}
